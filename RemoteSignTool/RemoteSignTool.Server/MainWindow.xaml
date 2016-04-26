@@ -1,0 +1,65 @@
+﻿<Window x:Class="RemoteSignTool.Server.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:ignore="http://www.galasoft.ch/ignore"
+        xmlns:local="clr-namespace:RemoteSignTool.Server"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        Title="Remote Sign Tool"
+        Width="600"
+        Height="300"
+        DataContext="{Binding Main,
+                              Source={StaticResource Locator}}"
+        mc:Ignorable="d ignore">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Skins/MainSkin.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <local:ApplicationResources x:Key="ApplicationResources" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <DockPanel x:Name="LayoutRoot">
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem Content="{Binding ServerStatus}" />
+        </StatusBar>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="{Binding Strings.Label_ServerAddress, Source={StaticResource ApplicationResources}}" ContentStringFormat="{}{0}:" />
+                <TextBox Grid.Column="1" Text="{Binding BaseAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button Command="{Binding StartServerCommand}" Content="{Binding Strings.Label_StartServer, Source={StaticResource ApplicationResources}}" />
+                <Button Grid.Column="1"
+                        Command="{Binding StopServerCommand}"
+                        Content="{Binding Strings.Label_StopServer,
+                                          Source={StaticResource ApplicationResources}}" />
+            </Grid>
+            <TextBox Grid.Row="2"
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Stretch"
+                     IsReadOnly="True"
+                     Text="{Binding Log,
+                                    Mode=OneWay}"
+                     TextWrapping="Wrap" />
+        </Grid>
+    </DockPanel>
+</Window>
