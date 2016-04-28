@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Text;
 using System.Windows.Input;
 using GalaSoft.MvvmLight;
@@ -17,7 +16,7 @@ namespace RemoteSignTool.Server.ViewModel
     /// See http://www.mvvmlight.net
     /// </para>
     /// </summary>
-    public class MainViewModel : ViewModelBase, IDataErrorInfo
+    public class MainViewModel : ViewModelBase
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly RelayCommand _startServerCommand;
@@ -83,10 +82,7 @@ namespace RemoteSignTool.Server.ViewModel
 
             set
             {
-                if (Set(ref _baseAddress, value))
-                {
-                    _startServerCommand.RaiseCanExecuteChanged();
-                }
+                Set(ref _baseAddress, value);
             }
         }
 
@@ -120,11 +116,8 @@ namespace RemoteSignTool.Server.ViewModel
             // Clean up if needed
             StopServer();
 
-            if (ValidateBaseAddress())
-            {
-                Properties.Settings.Default.BaseAddress = this.BaseAddress;
-                Properties.Settings.Default.Save();
-            }
+            Properties.Settings.Default.BaseAddress = this.BaseAddress;
+            Properties.Settings.Default.Save();
 
             base.Cleanup();
         }
@@ -149,7 +142,7 @@ namespace RemoteSignTool.Server.ViewModel
 
         private bool CanStartServer()
         {
-            return _httpServer == null && ValidateBaseAddress();
+            return _httpServer == null;
         }
 
         private void StopServer()
@@ -169,37 +162,5 @@ namespace RemoteSignTool.Server.ViewModel
         {
             return _httpServer != null;
         }
-
-        private bool ValidateBaseAddress()
-        {
-            return Uri.IsWellFormedUriString(this.BaseAddress, UriKind.Absolute);
-        }
-
-        #region IDataErrorInfo Members
-
-        public string Error
-        {
-            get
-            {
-                return string.Empty;
-            }
-        }
-
-        public string this[string columnName]
-        {
-            get
-            {
-                if (columnName == nameof(BaseAddress) && !ValidateBaseAddress())
-                {
-                    return Properties.Resources.InvalidUrl;
-                }
-                else
-                {
-                    return string.Empty;
-                }
-            }
-        }
-
-        #endregion
     }
 }

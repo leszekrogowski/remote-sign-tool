@@ -39,7 +39,7 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Label Content="{Binding Strings.Label_ServerAddress, Source={StaticResource ApplicationResources}}" ContentStringFormat="{}{0}:" />
-                <TextBox Grid.Column="1" Text="{Binding BaseAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" />
+                <TextBox Grid.Column="1" Text="{Binding BaseAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
