@@ -163,8 +163,21 @@ namespace RemoteSignTool.Client
                 zip.Save(archiveToUploadPath);
             }
 
-            var signedArchivePath = CommunicateWithServer(archiveToUploadPath, string.Join(" ", signSubcommands)).Result;
-            File.Delete(archiveToUploadPath);
+            string signedArchivePath;
+            try
+            {
+                signedArchivePath = CommunicateWithServer(archiveToUploadPath, string.Join(" ", signSubcommands)).Result;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to communicate with server");
+                return ErrorCodes.ServerCommunicationFailed;
+            }
+            finally
+            {
+                File.Delete(archiveToUploadPath);
+            }
+
             if (!string.IsNullOrEmpty(signedArchivePath))
             {
                 var targetDirectoryName = signedArchivePath.Substring(0, signedArchivePath.Length - 4);

@@ -9,5 +9,6 @@
         public const int UnknownSubcommand = 4;
         public const int SignToolInvalidExitCode = 5;
         public const int MultipleFilesWithTheSameNameNotSupported = 6;
+        public const int ServerCommunicationFailed = 7;
     }
 }

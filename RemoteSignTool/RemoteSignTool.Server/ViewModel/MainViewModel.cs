@@ -126,18 +126,24 @@ namespace RemoteSignTool.Server.ViewModel
         {
             if (_httpServer != null)
             {
-                // TODO: Try sign file
                 return;
             }
 
             StartOptions options = new StartOptions();
             options.Urls.Add(this.BaseAddress);
 
-            _httpServer = WebApp.Start<Startup>(options);
-            ServerStatus = Properties.Resources.Label_ServerIsRunning;
-            _startServerCommand.RaiseCanExecuteChanged();
-            _stopServerCommand.RaiseCanExecuteChanged();
-            Logger.Info(Properties.Resources.ServerHasBeenStarted);
+            try
+            {
+                _httpServer = WebApp.Start<Startup>(options);
+                ServerStatus = Properties.Resources.Label_ServerIsRunning;
+                _startServerCommand.RaiseCanExecuteChanged();
+                _stopServerCommand.RaiseCanExecuteChanged();
+                Logger.Info(Properties.Resources.ServerHasBeenStarted);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to start server");
+            }
         }
 
         private bool CanStartServer()
