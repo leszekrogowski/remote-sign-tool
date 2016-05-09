@@ -113,7 +113,7 @@ namespace RemoteSignTool.Client
                     for (int j = i; j <= i + supportedSignOptions[args[i]]; j++)
                     {
                         // Save supported sign subcommands for furture use
-                        signSubcommands.Add(args[j]);
+                        signSubcommands.Add(args[j].Any(char.IsWhiteSpace) ? string.Format("\"{0}\"", args[j]) : args[j]);
                     }
 
                     i += supportedSignOptions[args[i]];
