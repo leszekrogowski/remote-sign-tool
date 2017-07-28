@@ -20,7 +20,7 @@ namespace RemoteSignTool.Client
         private static readonly Dictionary<string, int> supportedSignOptions = new Dictionary<string, int>
         {
             // Certificate selection options
-            { "/a", 1 },
+            { "/a", 0 },
             { "/c", 1 },
             { "/i", 1 },
             { "/n", 1 },
