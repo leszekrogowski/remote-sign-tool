@@ -164,6 +164,9 @@
   <data name="ServerHasBeenStopped" xml:space="preserve">
     <value>Server has been stopped</value>
   </data>
+  <data name="SigningAtStartupFailed" xml:space="preserve">
+    <value>The server could not sign files when starting up</value>
+  </data>
   <data name="SignToolExitedWithCodeFormat" xml:space="preserve">
     <value>signtool.exe exited with code: {0}</value>
     <comment>{0} - exit code (integer)</comment>

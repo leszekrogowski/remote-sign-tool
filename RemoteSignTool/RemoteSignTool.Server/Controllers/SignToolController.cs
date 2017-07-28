@@ -52,9 +52,6 @@ namespace RemoteSignTool.Server.Controllers
                 Logger.Info(Properties.Resources.FilesHaveBeenExtractedFormat, extractionDirectoryName);
             }
 
-            int exitCode;
-            string standardOutput;
-            string standardError;
             string signToolPath;
             if (!_signToolService.TryToFindSignToolPath(out signToolPath))
             {
@@ -62,26 +59,10 @@ namespace RemoteSignTool.Server.Controllers
                 return this.InternalServerError(new FileNotFoundException(Properties.Resources.SignToolNotInstalled, "signtool.exe"));
             }
 
-            using (var process = new Process())
-            {
-                var signToolArguments = string.Format("sign {0} *.*", dto.SignSubcommands);
-                Logger.Info(Properties.Resources.ExecutingOnFormat, signToolPath, signToolArguments, extractionDirectoryName);
-
-                process.StartInfo.FileName = signToolPath;
-                process.StartInfo.Arguments = signToolArguments;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.WorkingDirectory = extractionDirectoryName;
-                process.Start();
-                standardOutput = await process.StandardOutput.ReadToEndAsync();
-                standardError = await process.StandardError.ReadToEndAsync();
-                process.WaitForExit(300000);
-                exitCode = process.ExitCode;
-            }
-
+            var signResult = await _signToolService.Sign(signToolPath, dto.SignSubcommands, extractionDirectoryName);
+                      
             var signedArchiveName = string.Format("{0}_signed.zip", Path.GetFileNameWithoutExtension(dto.ArchiveName));
-            if (exitCode == 0)
+            if (signResult.ExitCode == 0)
             {
                 Logger.Info(Properties.Resources.SignToolSuccessfullySignedFiles);
                 using (ZipFile zip = new ZipFile())
@@ -94,16 +75,16 @@ namespace RemoteSignTool.Server.Controllers
             }
             else
             {
-                Logger.Error(Properties.Resources.SignToolExitedWithCodeFormat, exitCode);
-                Logger.Error(standardError);
+                Logger.Error(Properties.Resources.SignToolExitedWithCodeFormat, signResult.ExitCode);
+                Logger.Error(signResult.StandardError);
             }
 
             var result = new SignResultDto()
             {
-                ExitCode = exitCode,
-                StandardOutput = standardOutput,
-                StandardError = standardError,
-                DownloadUrl = exitCode == 0 ? this.Url.Link(UploadController.DownloadRouteName, new { fileName = Uri.EscapeUriString(signedArchiveName) }) : null
+                ExitCode = signResult.ExitCode,
+                StandardOutput = signResult.StandardOutput,
+                StandardError = signResult.StandardError,
+                DownloadUrl = signResult.ExitCode == 0 ? this.Url.Link(UploadController.DownloadRouteName, new { fileName = Uri.EscapeUriString(signedArchiveName) }) : null
             };
 
             return this.Ok(result);
