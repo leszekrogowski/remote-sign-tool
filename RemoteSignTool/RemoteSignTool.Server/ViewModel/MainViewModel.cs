@@ -45,11 +45,12 @@ namespace RemoteSignTool.Server.ViewModel
                 });
 
             this.BaseAddress = Properties.Settings.Default.BaseAddress;
+
             string signToolPath;
             if (!_signToolService.TryToFindSignToolPath(out signToolPath))
             {
                 Logger.Error(Properties.Resources.SignToolNotInstalled);
-            }
+            }      
         }
 
         private string _serverStatus = Properties.Resources.Label_ServerIsNotRunning;
@@ -122,7 +123,7 @@ namespace RemoteSignTool.Server.ViewModel
             base.Cleanup();
         }
 
-        private void StartServer()
+        private async void StartServer()
         {
             if (_httpServer != null)
             {
@@ -134,6 +135,27 @@ namespace RemoteSignTool.Server.ViewModel
 
             try
             {
+                string signToolPath;
+                if (!_signToolService.TryToFindSignToolPath(out signToolPath))
+                {
+                    Logger.Error(Properties.Resources.SignToolNotInstalled);
+                    throw new Exception(Properties.Resources.SignToolNotInstalled);
+                }
+
+                var folderToSignAtStartup = Properties.Settings.Default.FolderToSignAtStartup;
+                if (!string.IsNullOrWhiteSpace(folderToSignAtStartup))
+                {
+                    var signResult = await _signToolService.Sign(signToolPath, " /a", folderToSignAtStartup);
+                    if (signResult.ExitCode != 0)
+                    {
+                        Logger.Error(Properties.Resources.SigningAtStartupFailed);
+                        Logger.Error(Properties.Resources.SignToolExitedWithCodeFormat, signResult.ExitCode);
+                        Logger.Error(signResult.StandardError);
+
+                        throw new Exception(Properties.Resources.SigningAtStartupFailed);
+                    }
+                }
+
                 _httpServer = WebApp.Start<Startup>(options);
                 ServerStatus = Properties.Resources.Label_ServerIsRunning;
                 _startServerCommand.RaiseCanExecuteChanged();

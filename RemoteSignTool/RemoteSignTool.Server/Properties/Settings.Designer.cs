@@ -34,5 +34,17 @@ namespace RemoteSignTool.Server.Properties {
                 this["BaseAddress"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string FolderToSignAtStartup {
+            get {
+                return ((string)(this["FolderToSignAtStartup"]));
+            }
+            set {
+                this["FolderToSignAtStartup"] = value;
+            }
+        }
     }
 }

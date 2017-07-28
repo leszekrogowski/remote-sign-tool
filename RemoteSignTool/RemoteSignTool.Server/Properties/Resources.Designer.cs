@@ -187,6 +187,15 @@ namespace RemoteSignTool.Server.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The server could not sign files when starting up.
+        /// </summary>
+        public static string SigningAtStartupFailed {
+            get {
+                return ResourceManager.GetString("SigningAtStartupFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to signtool.exe exited with code: {0}.
         /// </summary>
         public static string SignToolExitedWithCodeFormat {
