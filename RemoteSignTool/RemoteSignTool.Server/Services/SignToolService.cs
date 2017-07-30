@@ -1,9 +1,8 @@
-﻿using NLog;
-using RemoteSignTool.Common.Dto;
-using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using NLog;
+using RemoteSignTool.Common.Dto;
 
 namespace RemoteSignTool.Server.Services
 {

@@ -50,7 +50,7 @@ namespace RemoteSignTool.Server.ViewModel
             if (!_signToolService.TryToFindSignToolPath(out signToolPath))
             {
                 Logger.Error(Properties.Resources.SignToolNotInstalled);
-            }      
+            }
         }
 
         private string _serverStatus = Properties.Resources.Label_ServerIsNotRunning;
