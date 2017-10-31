@@ -4,8 +4,8 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Http.Handlers;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Ionic.Zip;
 using NLog;
@@ -206,78 +206,78 @@ namespace RemoteSignTool.Client
 
         private static async Task<string> CommunicateWithServer(string archivePath, string signSubcommands)
         {
-            var progressHandler = new ProgressMessageHandler();
-
-            progressHandler.HttpSendProgress += SendProgressHandler;
-            progressHandler.HttpReceiveProgress += ReceiveProgressHandler;
-
-
-            using (var client = HttpClientFactory.Create(progressHandler))
+            using (var progressHandler = new ProgressMessageHandler())
             {
-                var archiveName = Path.GetFileName(archivePath);
-                var serverBaseAddress = ConfigurationManager.AppSettings["ServerBaseUrl"];
-                client.BaseAddress = new Uri(serverBaseAddress);
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                progressHandler.HttpSendProgress += SendProgressHandler;
+                progressHandler.HttpReceiveProgress += ReceiveProgressHandler;
 
-                using (var content = new MultipartFormDataContent())
+                using (var client = HttpClientFactory.Create(progressHandler))
                 {
-                    var fileContent = new StreamContent(File.OpenRead(archivePath));
-                    fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+                    var archiveName = Path.GetFileName(archivePath);
+                    var serverBaseAddress = ConfigurationManager.AppSettings["ServerBaseUrl"];
+                    client.BaseAddress = new Uri(serverBaseAddress);
+                    client.DefaultRequestHeaders.Accept.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    using (var content = new MultipartFormDataContent())
                     {
-                        FileName = Path.GetFileName(archivePath)
+                        var fileContent = new StreamContent(File.OpenRead(archivePath));
+                        fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+                        {
+                            FileName = Path.GetFileName(archivePath)
+                        };
+                        content.Add(fileContent);
+
+                        var requestUri = "api/upload/save";
+                        var uploadResponse = await client.PostAsync(requestUri, content);
+
+                        if (!uploadResponse.IsSuccessStatusCode)
+                        {
+                            await ShowErrorAsync(uploadResponse);
+                            return null;
+                        }
+                    }
+
+                    var signRequestDto = new SignDto()
+                    {
+                        ArchiveName = archiveName,
+                        SignSubcommands = signSubcommands
                     };
-                    content.Add(fileContent);
 
-                    var requestUri = "api/upload/save";
-                    var uploadResponse = await client.PostAsync(requestUri, content);
+                    Logger.Info($"Perform sign for: {archiveName}, using commands: {signSubcommands}");
 
-                    if (!uploadResponse.IsSuccessStatusCode)
+                    var signResponse = await client.PostAsJsonAsync("api/signtool/sign", signRequestDto);
+                    if (!signResponse.IsSuccessStatusCode)
                     {
-                        await ShowErrorAsync(uploadResponse);
+                        await ShowErrorAsync(signResponse);
                         return null;
                     }
+
+                    var signResponseDto = await signResponse.Content.ReadAsAsync<SignResultDto>();
+                    if (signResponseDto.ExitCode != 0)
+                    {
+                        Logger.Error("signtool.exe exited with code: {0}", signResponseDto.ExitCode);
+                        Logger.Error(signResponseDto.StandardOutput);
+                        Logger.Error(signResponseDto.StandardError);
+                        return null;
+                    }
+
+                    Logger.Info($"Begin to download signed archive: {archiveName}");
+
+                    var downloadReponse = await client.GetStreamAsync(signResponseDto.DownloadUrl);
+                    var signedArchiveName = Path.GetFileName(signResponseDto.DownloadUrl);
+                    var signedArchivePath = Path.Combine(TempDirectoryName, signedArchiveName);
+
+                    using (var fileStream = File.Create(signedArchivePath))
+                    {
+                        await downloadReponse.CopyToAsync(fileStream);
+                    }
+
+                    Logger.Info($"Delete archives {archiveName}, {signedArchiveName} from server");
+
+                    await client.PostAsJsonAsync("api/upload/remove", new List<string>() { archiveName, signedArchiveName });
+                    return signedArchivePath;
                 }
-
-                var signRequestDto = new SignDto()
-                {
-                    ArchiveName = archiveName,
-                    SignSubcommands = signSubcommands
-                };
-
-                Logger.Info($"Perform sign for: {archiveName}, using commands: {signSubcommands}");
-
-                var signResponse = await client.PostAsJsonAsync("api/signtool/sign", signRequestDto);
-                if (!signResponse.IsSuccessStatusCode)
-                {
-                    await ShowErrorAsync(signResponse);
-                    return null;
-                }
-
-                var signResponseDto = await signResponse.Content.ReadAsAsync<SignResultDto>();
-                if (signResponseDto.ExitCode != 0)
-                {
-                    Logger.Error("signtool.exe exited with code: {0}", signResponseDto.ExitCode);
-                    Logger.Error(signResponseDto.StandardOutput);
-                    Logger.Error(signResponseDto.StandardError);
-                    return null;
-                }
-
-                Logger.Info($"Begin to download signed archive: {archiveName}");
-
-                var downloadReponse = await client.GetStreamAsync(signResponseDto.DownloadUrl);
-                var signedArchiveName = Path.GetFileName(signResponseDto.DownloadUrl);
-                var signedArchivePath = Path.Combine(TempDirectoryName, signedArchiveName);
-
-                using (var fileStream = File.Create(signedArchivePath))
-                {
-                    await downloadReponse.CopyToAsync(fileStream);
-                }
-
-                Logger.Info($"Delete archives {archiveName}, {signedArchiveName} from server");
-
-                await client.PostAsJsonAsync("api/upload/remove", new List<string>() { archiveName, signedArchiveName });
-                return signedArchivePath;
             }
         }
 
