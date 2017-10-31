@@ -298,7 +298,7 @@ namespace RemoteSignTool.Client
 
         private static void LogProgress(string prefix, HttpProgressEventArgs e)
         {
-            Logger.Info($"{prefix} ({e.ProgressPercentage}) Transfered: {e.BytesTransferred}, Total: {e.TotalBytes}");
+            Logger.Info($"{prefix} ({e.ProgressPercentage}%) Transfered: {e.BytesTransferred}, Total: {e.TotalBytes}");
         }
     }
 }
