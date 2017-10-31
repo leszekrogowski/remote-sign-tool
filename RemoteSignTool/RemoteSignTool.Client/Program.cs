@@ -286,12 +286,12 @@ namespace RemoteSignTool.Client
             Logger.Error("Status code: {0}", response.StatusCode);
             Logger.Error(await response.Content.ReadAsStringAsync());
         }
-        private static void SendProgressHandler(object sender, System.Net.Http.Handlers.HttpProgressEventArgs e)
+        private static void SendProgressHandler(object sender, HttpProgressEventArgs e)
         {
             LogProgress("Sending:", e);
         }
 
-        private static void ReceiveProgressHandler(object sender, System.Net.Http.Handlers.HttpProgressEventArgs e)
+        private static void ReceiveProgressHandler(object sender, HttpProgressEventArgs e)
         {
             LogProgress("Receive:", e);
         }
