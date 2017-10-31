@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Handlers;
 using System.Threading.Tasks;
 using Ionic.Zip;
 using NLog;
@@ -166,6 +167,7 @@ namespace RemoteSignTool.Client
             string signedArchivePath;
             try
             {
+                Logger.Info($"Uploading zip file: {archiveToUploadName}, containing files: {string.Join(", ", filesToSign.ToArray())}");
                 signedArchivePath = CommunicateWithServer(archiveToUploadPath, string.Join(" ", signSubcommands)).Result;
             }
             catch (Exception ex)
@@ -204,7 +206,13 @@ namespace RemoteSignTool.Client
 
         private static async Task<string> CommunicateWithServer(string archivePath, string signSubcommands)
         {
-            using (var client = new HttpClient())
+            var progressHandler = new ProgressMessageHandler();
+
+            progressHandler.HttpSendProgress += SendProgressHandler;
+            progressHandler.HttpReceiveProgress += ReceiveProgressHandler;
+
+
+            using (var client = HttpClientFactory.Create(progressHandler))
             {
                 var archiveName = Path.GetFileName(archivePath);
                 var serverBaseAddress = ConfigurationManager.AppSettings["ServerBaseUrl"];
@@ -237,6 +245,8 @@ namespace RemoteSignTool.Client
                     SignSubcommands = signSubcommands
                 };
 
+                Logger.Info($"Perform sign for: {archiveName}, using commands: {signSubcommands}");
+
                 var signResponse = await client.PostAsJsonAsync("api/signtool/sign", signRequestDto);
                 if (!signResponse.IsSuccessStatusCode)
                 {
@@ -253,6 +263,8 @@ namespace RemoteSignTool.Client
                     return null;
                 }
 
+                Logger.Info($"Begin to download signed archive: {archiveName}");
+
                 var downloadReponse = await client.GetStreamAsync(signResponseDto.DownloadUrl);
                 var signedArchiveName = Path.GetFileName(signResponseDto.DownloadUrl);
                 var signedArchivePath = Path.Combine(TempDirectoryName, signedArchiveName);
@@ -261,6 +273,8 @@ namespace RemoteSignTool.Client
                 {
                     await downloadReponse.CopyToAsync(fileStream);
                 }
+
+                Logger.Info($"Delete archives {archiveName}, {signedArchiveName} from server");
 
                 await client.PostAsJsonAsync("api/upload/remove", new List<string>() { archiveName, signedArchiveName });
                 return signedArchivePath;
@@ -271,6 +285,20 @@ namespace RemoteSignTool.Client
         {
             Logger.Error("Status code: {0}", response.StatusCode);
             Logger.Error(await response.Content.ReadAsStringAsync());
+        }
+        private static void SendProgressHandler(object sender, System.Net.Http.Handlers.HttpProgressEventArgs e)
+        {
+            LogProgress("Sending:", e);
+        }
+
+        private static void ReceiveProgressHandler(object sender, System.Net.Http.Handlers.HttpProgressEventArgs e)
+        {
+            LogProgress("Receive:", e);
+        }
+
+        private static void LogProgress(string prefix, HttpProgressEventArgs e)
+        {
+            Logger.Info($"{prefix} ({e.ProgressPercentage}) Transfered: {e.BytesTransferred}, Total: {e.TotalBytes}");
         }
     }
 }
