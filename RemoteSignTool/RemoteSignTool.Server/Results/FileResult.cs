@@ -39,7 +39,7 @@ namespace RemoteSignTool.Server.Results
             return Task.Run(
                 () =>
                 {
-                    var streamBufferSize = 1024 * 1024; // 1MB buffer size
+                    const int streamBufferSize = 1024 * 1024; // 1MB buffer size
                     var response = new HttpResponseMessage(HttpStatusCode.OK)
                     {
                         Content = new StreamContent(File.OpenRead(this._filePath), streamBufferSize)
