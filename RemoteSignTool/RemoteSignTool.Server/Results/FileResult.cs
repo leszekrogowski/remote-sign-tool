@@ -39,10 +39,10 @@ namespace RemoteSignTool.Server.Results
             return Task.Run(
                 () =>
                 {
-                    const int streamBufferSize = 1024 * 1024; // 1MB buffer size
+                    const int StreamBufferSize = 1024 * 1024; // 1MB buffer size
                     var response = new HttpResponseMessage(HttpStatusCode.OK)
                     {
-                        Content = new StreamContent(File.OpenRead(this._filePath), streamBufferSize)
+                        Content = new StreamContent(File.OpenRead(this._filePath), StreamBufferSize)
                     };
 
                     var contentType = this._contentType ?? MimeMapping.GetMimeMapping(Path.GetFileName(this._filePath));
