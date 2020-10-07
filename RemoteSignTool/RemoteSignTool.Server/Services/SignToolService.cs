@@ -29,19 +29,19 @@ namespace RemoteSignTool.Server.Services
             }
             else
             {
-                System.IO.DirectoryInfo sdkRoot = new System.IO.DirectoryInfo(WindowsSDKRootPath);
-                System.IO.DirectoryInfo[] subDirs = sdkRoot.GetDirectories("10.*", System.IO.SearchOption.AllDirectories);
+                DirectoryInfo sdkRoot = new DirectoryInfo(WindowsSDKRootPath);
+                DirectoryInfo[] subDirs = sdkRoot.GetDirectories("10.*", SearchOption.AllDirectories);
 
-                foreach (System.IO.DirectoryInfo dirInfo in subDirs.Reverse())
+                foreach (DirectoryInfo dirInfo in subDirs.Reverse())
                 {
                     string sdkPath = dirInfo.FullName;
-                    Logger.Log(LogLevel.Info, "Looking in " + sdkPath + " for the signtool...");
+                    Logger.Log(LogLevel.Info, $"Searching for signtool in {sdkPath}...");
 
-                    string signtoolPath = sdkPath + "/x64/signtool.exe";
+                    string signToolPath = Path.Combine(sdkPath, "x64", "signtool.exe");
 
-                    if (File.Exists(signtoolPath))
+                    if (File.Exists(signToolPath))
                     {
-                        path = signtoolPath;
+                        path = signToolPath;
                         return true;
                     }
                 }
