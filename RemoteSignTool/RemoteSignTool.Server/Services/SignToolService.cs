@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
 using NLog;
 using RemoteSignTool.Common.Dto;
 
@@ -10,7 +11,7 @@ namespace RemoteSignTool.Server.Services
     {
         private const string SignToolX64Path = @"C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe";
         private const string SignToolX86Path = @"C:\Program Files (x86)\Windows Kits\10\bin\x86\signtool.exe";
-        private const string SignTool_15063_X64Path = @"C:\Program Files (x86)\Windows Kits\10\bin\10.0.15063.0\x64\signtool.exe";
+        private const string WindowsSDKRootPath = @"C:\Program Files (x86)\Windows Kits\10\bin\";
 
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -26,16 +27,28 @@ namespace RemoteSignTool.Server.Services
                 path = SignToolX86Path;
                 return true;
             }
-            else if (File.Exists(SignTool_15063_X64Path))
-            {
-                path = SignTool_15063_X64Path;
-                return true;
-            }
             else
             {
-                path = null;
-                return false;
+                DirectoryInfo sdkRoot = new DirectoryInfo(WindowsSDKRootPath);
+                DirectoryInfo[] subDirs = sdkRoot.GetDirectories("10.*", SearchOption.AllDirectories);
+
+                foreach (DirectoryInfo dirInfo in subDirs.Reverse())
+                {
+                    string sdkPath = dirInfo.FullName;
+                    Logger.Log(LogLevel.Info, $"Searching for signtool in {sdkPath}...");
+
+                    string signToolPath = Path.Combine(sdkPath, "x64", "signtool.exe");
+
+                    if (File.Exists(signToolPath))
+                    {
+                        path = signToolPath;
+                        return true;
+                    }
+                }
             }
+
+            path = null;
+            return false;
         }
 
         public async Task<SignResultDto> Sign(string signToolPath, string signSubcommnands, string workingDirectory)
